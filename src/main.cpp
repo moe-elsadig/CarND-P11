@@ -260,7 +260,7 @@ int main() {
             int car_ahead = -1;
             bool safe_left = true;
             bool safe_right = true;
-
+            double cur_lane_spd = 50.;
             //find ref_v to use
             for(int i = 0; i < sensor_fusion.size(); i++){
 
@@ -282,6 +282,7 @@ int main() {
 
                   too_close = true;
                   car_ahead = i;
+                  cur_lane_spd = check_speed;
                 }
               }else if((check_car_s > (car_s-3)) && ((check_car_s-(car_s-3)) < 25)){
 
@@ -314,14 +315,46 @@ int main() {
                 lane += 1;
 
               }else{
+                
+                if(car_speed > cur_lane_spd){
 
-              ref_vel -= .448;  
+                  ref_vel -= .448; 
+                } 
               }
               
             }else if(ref_vel < 49.5){
 
               ref_vel += .448;
             }
+
+
+            //Agressive racer mode!!!!!
+
+            // if(too_close){
+
+            //   if(safe_left && lane > 0){
+
+            //     lane -= 1;
+
+            //     ref_vel -= .8;  
+
+            //   }else if(safe_right && lane < 2){
+
+            //     lane += 1;
+
+            //     ref_vel -= .8;  
+
+            //   }else{
+
+            //   ref_vel -= .8;  
+            //   }
+              
+            // }else if(ref_vel < 120){
+
+            //   ref_vel += .8;
+            // }
+
+
 
 
 
