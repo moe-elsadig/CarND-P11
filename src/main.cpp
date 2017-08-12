@@ -257,14 +257,16 @@ int main() {
             }
 
             bool too_close = false;
-            int closest_car;
+            int car_ahead = -1;
+            bool safe_left = true;
+            bool safe_right = true;
 
             //find ref_v to use
             for(int i = 0; i < sensor_fusion.size(); i++){
 
               float d = sensor_fusion[i][6];
 
-              //check for car in same lane within limit
+              //check for car in same lane or about to change to the same lane
 
               if(d < (2+4*lane+2) && d > (2+4*lane-2)){
 
@@ -275,22 +277,64 @@ int main() {
 
                 check_car_s += ((double) prev_size*0.02*check_speed);
 
-                if((check_car_s > car_s) && ((check_car_s-car_s) < 20)){
+                if((check_car_s > car_s) && ((check_car_s-car_s) < 30)){
 
                   too_close = true;
+                  car_ahead = i;
 
                 }
+
+              }else if(too_close){
+
+                double vx = sensor_fusion[i][3];
+                double vy = sensor_fusion[i][4];
+                double check_speed = sqrt(vx*vx+vy*vy);
+                double check_car_s = sensor_fusion[i][5];
+
+                check_car_s += ((double) prev_size*0.02*check_speed);
+
+
+                if((check_car_s-car_s) < 30){
+
+                  if(d < car_d){
+
+                    safe_right = false;
+                  }else if(d > car_d){
+
+                    safe_left = false;
+                  }
+
+                }
+
               }
+
             }
 
             if(too_close){
 
-              ref_vel -= .224;
+            cout << "Too_close: " << too_close << endl
+                 << "\tSafe_right: " << safe_right << endl
+                 << "\tSafe_left: " << safe_left << endl;
+            }
 
+            if(too_close){
+
+              if(safe_left && lane > 0){
+
+                lane -= 1;
+              }else if(safe_right && lane < 2){
+
+                lane += 1;
+              }else{
+
+              ref_vel -= .224;  
+              }
+              
             }else if(ref_vel < 49.5){
 
-              ref_vel += .224;
+              ref_vel += .448;
             }
+
 
 
             vector<double> ptsx;
@@ -400,24 +444,6 @@ int main() {
 
 
             }
-
-
-
-            // double dist_inc = 0.5;
-            //
-            // for(int i=0; i<50; i++){
-            //
-            //   double next_s = car_s + (i+1) * dist_inc;
-            //   double next_d = 6;
-            //
-            //   vector<double> xy = getXY(next_s, next_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-            //
-            //   next_x_vals.push_back(xy[0]);
-            //   next_y_vals.push_back(xy[1]);
-            // }
-
-
-
 
             // DOing
           	msgJson["next_x"] = next_x_vals;
