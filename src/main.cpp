@@ -268,66 +268,54 @@ int main() {
 
               //check for car in same lane or about to change to the same lane
 
+
+              double vx = sensor_fusion[i][3];
+              double vy = sensor_fusion[i][4];
+              double check_speed = sqrt(vx*vx+vy*vy);
+              double check_car_s = sensor_fusion[i][5];
+
+              check_car_s += ((double) prev_size*0.02*check_speed);
+
               if(d < (2+4*lane+2) && d > (2+4*lane-2)){
-
-                double vx = sensor_fusion[i][3];
-                double vy = sensor_fusion[i][4];
-                double check_speed = sqrt(vx*vx+vy*vy);
-                double check_car_s = sensor_fusion[i][5];
-
-                check_car_s += ((double) prev_size*0.02*check_speed);
 
                 if((check_car_s > car_s) && ((check_car_s-car_s) < 30)){
 
                   too_close = true;
                   car_ahead = i;
+                }
+              }else if((check_car_s > (car_s-3)) && ((check_car_s-(car_s-3)) < 25)){
 
+                if(d < 2+4*lane-1 && d > 2+4*(lane-1)-3 && car_speed > check_speed){
+
+                  safe_left = false;
                 }
 
-              }else if(too_close){
+                if(d > 2+4*lane+1 && d < 2+4*(lane+1)+3 && car_speed > check_speed){
 
-                double vx = sensor_fusion[i][3];
-                double vy = sensor_fusion[i][4];
-                double check_speed = sqrt(vx*vx+vy*vy);
-                double check_car_s = sensor_fusion[i][5];
-
-                check_car_s += ((double) prev_size*0.02*check_speed);
-
-
-                if((check_car_s-car_s) < 30){
-
-                  if(d < car_d){
-
-                    safe_right = false;
-                  }else if(d > car_d){
-
-                    safe_left = false;
-                  }
-
+                  safe_right = false;
                 }
 
               }
 
             }
 
-            if(too_close){
-
-            cout << "Too_close: " << too_close << endl
-                 << "\tSafe_right: " << safe_right << endl
-                 << "\tSafe_left: " << safe_left << endl;
-            }
+            cout << "\rToo_close: " << too_close
+                 << "\tSafe_right: " << safe_right
+                 << "\tSafe_left: " << safe_left;
 
             if(too_close){
 
               if(safe_left && lane > 0){
 
                 lane -= 1;
+
               }else if(safe_right && lane < 2){
 
                 lane += 1;
+
               }else{
 
-              ref_vel -= .224;  
+              ref_vel -= .448;  
               }
               
             }else if(ref_vel < 49.5){
