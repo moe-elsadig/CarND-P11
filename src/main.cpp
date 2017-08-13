@@ -294,7 +294,7 @@ int main() {
               //estimate the location of the car in sd coordinates in the next future step
               check_car_s += ((double) prev_size*0.02*check_speed);
 
-              double turn_gap = 4.; 
+              double turn_gap = 4.5; 
 
               //check whether the car is occupying the same lane or not
               if(d < (2+4*lane+2) && d > (2+4*lane-2)){
@@ -310,7 +310,7 @@ int main() {
                 }
               //if it doesn't occupy the same exact lane check if it is next to or ahead of the car by 20m  
               //if this condition is true, check whether it is in the adjacent lane or entering the current turn to prevent unsafe turns.
-              }else if((check_car_s > (car_s-turn_gap)) && ((check_car_s-(car_s-turn_gap)) < (safety_gap_ahead))){
+              }else if((check_car_s > (car_s-turn_gap)) && ((check_car_s-(car_s-turn_gap)) < (safety_gap_ahead-turn_gap))){
 
                 if(d < 2+4*lane-1 && d > 2+4*(lane-1)-3 && car_speed > check_speed){
 
@@ -347,16 +347,10 @@ int main() {
                 //decrease the value to turn left
                 lane -= 1;
 
-                double perc = (car_speed-cur_lane_spd)/cur_lane_spd;
-                ref_vel += .224 * perc; 
-
               }else if(safe_right && lane < 2){
 
                 //increase the value to turn right
                 lane += 1;
-
-                double perc = (car_speed-cur_lane_spd)/cur_lane_spd;
-                ref_vel += .224 * perc; 
 
               }else{
                 
@@ -426,9 +420,9 @@ int main() {
             }
 
             //get the XY coordinates for points that are 30, 60 and 90 meters ahead of the car in s coordinates
-            vector<double> next_wp0 = getXY(car_s+35, (2+4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-            vector<double> next_wp1 = getXY(car_s+70, (2+4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-            vector<double> next_wp2 = getXY(car_s+105, (2+4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+            vector<double> next_wp0 = getXY(car_s+30, (2+4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+            vector<double> next_wp1 = getXY(car_s+60, (2+4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+            vector<double> next_wp2 = getXY(car_s+90, (2+4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
             //add the x values from the 30, 60 and 90 forward estimations to the x_points
             ptsx.push_back(next_wp0[0]);
