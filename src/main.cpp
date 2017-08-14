@@ -281,10 +281,10 @@ int main() {
             double speed_limit = 49.5;
 
             //safety gap with car ahead
-            double safety_gap_ahead = 1 + (car_speed/speed_limit) * 30.;
+            double safety_gap_ahead = 1 + (car_speed/speed_limit) * 20.;
 
             //gap that's safe to turn into
-            double safety_gap_turn = 1 + (car_speed/speed_limit) * 25.;
+            double safety_gap_turn = 1 + (car_speed/speed_limit) * 30.;
 
             //find ref_v to use
             //iterate throught the sensor_fusion parameter (the other vehicles nearby)
