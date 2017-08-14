@@ -2,8 +2,41 @@
 Self-Driving Car Engineer Nanodegree Program
    
 > https://youtu.be/gaO-MLdUA6U
-   
-   
+
+
+// First we obtain the main car's localization Data: 
+Previous path data given to the Planner, Previous path's end s and d values, the Sensor Fusion Data which is a list of all other cars on the same side of the road.
+Next we define a path made up of (x,y) points that the car will visit sequentially every .02 seconds.
+We need check for a previous path and update the car's current s-coordinate
+A variable for the reference velocity will be used to dictate to the main car whether or not to accelerate (i.e. the target velocity it should be at).
+Next we iterate throught the sensor_fusion parameter (the list of data for the other vehicles nearby) to assess the main car's surroundings and perform our control logic.
+We us the lateral coordinate d of the other vehicle to determine it's current lane. Now we can check if the car in same lane or about to change to the same lane.
+We also estimate the location of the car in s-d coordinates in the next future step and check whether the car will be occupying the same lane or not.
+If the car is in the same lane we check whether or not it is both ahead and within a safety distance of the main car calculated based on the main car's speed. If the previous condition is true then set the too_close flag to positive and record the id and speed of the car ahead. However, if it doesn't occupy the same exact lane check if it is next to and ahead of the car by a turning-safety distance again based on the speed. If this previous condition is true, check whether it is staying in the adjacent lane or entering the current lane to prevent unsafe turns. Based on the last two safety conditions we set the safe_left and safe_right flags accordingly to prevent unsafe turns.
+For debugging logic behaviour continuously output the status of the three main behaviour-changing flags to the console.
+
+Based on the above mentioned flags we now need to perform any needed behaviour changes. 
+
+is the car ahead too close?
+> YES
+	can you change to a lane?
+	> YES
+		is it safe to change to left or right? (without a cost function at the moment, inital preference is given to going left)
+  		> LEFT
+  			Change lanes
+  		> RIGHT
+  			Change lanes
+  	> NO
+		Decelerate according to speed and distance
+> NO
+	accelerate towards speed limit
+
+Next we need to build the path for the car to move onto now that the speed and lane has been decided. First we initialise vectors to store the x-y map points, currently the origin for calculations are the car's current global x, y, and yaw values. We check the size of the precious path and either initialise or extract points from the previous path to add to the x-y map points. The next step is to get the x-y coordinates for distances 30, 60 and 90 meters ahead of the car current position in s cooredinates. Next we Iterate throught the all the points in x-y vectors and shift from the map-xy coordinates to the car-xy coordinates for easier calculations. All we need now is to initialise a spline element s and set the points for this spline using our x-y points that we calculated so far. For our final step we initialise vectors to store the future set of x and y values, we iterate through the values of the previous path and add them to the future path vectors. After getting the spline setup for the next 90 m in s-coordinates we select a target range to immediately follow and draw in the simulator. Using the spline we iterate through our transformed future x values to get the corresponding y values. The vectors for future x and y values should always have 50 elements, we can achieve this by checking on the previous path size and subtracting from 50. make sure in each iteration that the values are from the previous calculated position and not the current position.
+
+
+
+
+
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases).
 

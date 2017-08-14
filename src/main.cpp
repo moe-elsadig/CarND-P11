@@ -281,7 +281,7 @@ int main() {
             double speed_limit = 49.5;
 
             //safety gap with car ahead
-            double safety_gap_ahead = 1 + (car_speed/speed_limit) * 20.;
+            double safety_gap_ahead = 1 + (car_speed/speed_limit) * 30.;
 
             //gap that's safe to turn into
             double safety_gap_turn = 1 + (car_speed/speed_limit) * 30.;
@@ -375,7 +375,7 @@ int main() {
                 if(car_speed > cur_lane_spd or dist_car_ahead < (safety_gap_ahead/2)){
 
                   double perc = (car_speed-cur_lane_spd)/cur_lane_spd;
-                  ref_vel -= .448 * perc; 
+                  ref_vel -= .8 * perc; 
                 } 
               }
             
@@ -383,7 +383,7 @@ int main() {
             }else if(ref_vel < speed_limit){
 
               double perc = (cur_lane_spd - car_speed)/cur_lane_spd;
-              ref_vel += .448 * perc;
+              ref_vel += .8 * perc;
             }
 
             //initialise vectors to store the XY map points
