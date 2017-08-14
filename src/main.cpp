@@ -205,8 +205,10 @@ int main() {
   // have a reference velocity to target
   double ref_vel = 0.; // MPH 
 
+  //lane change priority
+  bool lane_change_priority = true;
 
-  h.onMessage([&ref_vel, &lane, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&lane_change_priority, &ref_vel, &lane, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -263,6 +265,9 @@ int main() {
             //an int to store the id of the car that activated the too close boolean
             int car_ahead = -1;
 
+            //the distance from the car ahead
+            double dist_car_ahead = 50.;
+
             //a value that stores whether it is safe to shift to the left or not
             bool safe_left = true;
 
@@ -276,7 +281,10 @@ int main() {
             double speed_limit = 49.5;
 
             //safety gap with car ahead
-            double safety_gap_ahead = (car_speed/speed_limit) * 15.;
+            double safety_gap_ahead = 1 + (car_speed/speed_limit) * 30.;
+
+            //gap that's safe to turn into
+            double safety_gap_turn = 1 + (car_speed/speed_limit) * 25.;
 
             //find ref_v to use
             //iterate throught the sensor_fusion parameter (the other vehicles nearby)
@@ -294,7 +302,7 @@ int main() {
               //estimate the location of the car in sd coordinates in the next future step
               check_car_s += ((double) prev_size*0.02*check_speed);
 
-              double turn_gap = 4.5; 
+              double turn_gap = (car_speed/speed_limit) * 3 + 5; 
 
               //check whether the car is occupying the same lane or not
               if(d < (2+4*lane+2) && d > (2+4*lane-2)){
@@ -306,11 +314,12 @@ int main() {
                   //set the too_close flag and record the id and speed of the car
                   too_close = true;
                   car_ahead = i;
+                  dist_car_ahead = check_car_s-car_s;
                   cur_lane_spd = check_speed;
                 }
               //if it doesn't occupy the same exact lane check if it is next to or ahead of the car by 20m  
               //if this condition is true, check whether it is in the adjacent lane or entering the current turn to prevent unsafe turns.
-              }else if((check_car_s > (car_s-turn_gap)) && ((check_car_s-(car_s-turn_gap)) < (safety_gap_ahead-turn_gap))){
+              }else if((check_car_s > (car_s-turn_gap)) && ((check_car_s-(car_s-turn_gap)) < (safety_gap_turn))){
 
                 if(d < 2+4*lane-1 && d > 2+4*(lane-1)-3 && car_speed > check_speed){
 
@@ -331,10 +340,8 @@ int main() {
 
             //for debugging behavioud continuously output the status of the three main behaviour changing flags to the console
             cout << "\rToo_close: " << too_close
-                 << "\tSafe_right: " << safe_right
-                 << "\tSafe_left: " << safe_left
-                 << "\tcar/lane_spd: " << car_speed
-                 << "  /  " << cur_lane_spd << "      ";
+                 << "\tSafe_R: " << safe_right
+                 << "\tSafe_L: " << safe_left;
 
             //based on the above calculations perform any needed behaviour changes
             //check whether a car is too close
@@ -342,20 +349,30 @@ int main() {
 
               //if a car is close which lane should you change to? without a cost function at the moment
               //preference is given to going left
-              if(safe_left && lane > 0){
+              if(safe_left && lane_change_priority){
 
                 //decrease the value to turn left
-                lane -= 1;
+                if(lane > 0){
+                
+                  lane -= 1;
+                }
+                lane_change_priority = false;
 
-              }else if(safe_right && lane < 2){
+              }else if(safe_right){
 
-                //increase the value to turn right
-                lane += 1;
+                //increase the value to turn right=
+                if(lane < 2){
+                
+                  lane += 1;
+                }
+                lane_change_priority = true;
 
               }else{
+
+                lane_change_priority = true;
                 
                 //if the car cannot avoid the car ahead decrease the speed to match it to avoid collision
-                if(car_speed > cur_lane_spd){
+                if(car_speed > cur_lane_spd or dist_car_ahead < (safety_gap_ahead/2)){
 
                   double perc = (car_speed-cur_lane_spd)/cur_lane_spd;
                   ref_vel -= .448 * perc; 
@@ -364,10 +381,9 @@ int main() {
             
             //if there is no car obstructing the path, accelerate towards the speed limit
             }else if(ref_vel < speed_limit){
-              
+
               double perc = (cur_lane_spd - car_speed)/cur_lane_spd;
               ref_vel += .448 * perc;
-              // ref_vel += .448;
             }
 
             //initialise vectors to store the XY map points
